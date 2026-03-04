@@ -1,7 +1,6 @@
 # contains nn modules
 from typing import List
 
-
 from pyparsing import alphas
 import torch
 from torch import nn
@@ -58,7 +57,7 @@ class AGNOBlock(nn.Module):
         self.neighbor_search = NeighborSearch(use_open3d=use_open3d_neighbor_search)
 
 
-        # MLP for kernel K
+        # the following MLP computes learns the kernel K(x,y,f(x)) in the nonlinear case, or just K(x,y) in the linear case
         kernel_in_ch = self.f_channels + 2*self.pos_embedding_channels if self.pos_embed else self.f_channels + 2*self.coord_dim
         # K(x_emb, y_emb, MLP(f(x))) or K(x, y, MLP(f(x))) depending on pos_embed
         if channel_mlp is not None: # personalized channel if transform_type is nonlinear
@@ -85,21 +84,31 @@ class AGNOBlock(nn.Module):
         # f_x: [bs, n_x, f_channels]
 
         if self.pos_embed:
-            x = self.point_embedding(x) # [bs, n_x, pos_embedding_channels]
-            y = self.point_embedding(y) # [n_y, pos_embedding_channels]
-
-        Q = self.W_q(y) # [n_y, out_ch]
-        K = self.W_k(x) # [bs, n_x, out_ch]
-        neighbors_dict = self.neighbor_search(data=x, queries=y, radius=self.radius) # neighbors of y
+            x_emb = self.point_embedding(x) # [bs, n_x, pos_embedding_channels]
+            y_emb = self.point_embedding(y) # [n_y, pos_embedding_channels]
         
-        src_idx, trg_idx = neighbors_dict['edge_index']
+        Q = self.W_q(y) # [n_y, out_ch]
+        K_att = self.W_k(x) # [bs, n_x, out_ch]
 
-        # sparse aplhas (only for neighbors)
-        # Q[trg_idx]: [num_edges, out_ch], K[:, src_idx]: [bs, num_edges, out_ch]
-        dot_prod = torch.sum(Q[trg_idx] * K[:, src_idx], dim=-1) 
-        scores = dot_prod / (self.out_channels ** 0.5)
-        alphas =  softmax(scores, trg_idx, dim=-1) # [num_edges]
-        f_emb = self.lift_ffn(f_x) # [bs, n_x, out_channels]
-        f_y = self.integral_transform(x=x, neighbors=neighbors_dict, y=y, f_x=f_emb, weights=alphas) # [bs, n_y, out_channels]
+
+        neighbors_dict = self.neighbor_search(data=x, queries=y, radius=self.radius)
+        # expected:
+        # neighbors_dict["neighbors_index"]  -> (M,)
+        # neighbors_dict["neighbors_row_splits"] -> (n_y + 1,)
+        # M = total number of edges
+
+        neighbors_index = neighbors_dict["neighbors_index"]
+        row_splits = neighbors_dict["neighbors_row_splits"]
+
+        phi_x = self.lift_ffn(f_x) # [bs, n_x, out_ch]
+
+        # integral transform
+        f_y = self.integral_transform(x=x, y=y, x_embed=x_emb if self.pos_embed else None, y_embed=y_emb if self.pos_embed else None,
+                                      f_x=f_x, phi_x=phi_x, Q=Q, K_att=K_att, neighbors_index=neighbors_index, row_splits=row_splits)
+
+        """
+        complete this with the computation of sum_x K(x,y,f(x)) * lift_ffn(f(x)) for each y. the sum is taken over neighbors and alpha should be 
+        the attention-based weights form Q and K similarly to GAOT. use integral transform (whose forward pass should be coded accordingly)
+        """
 
         return f_y
