@@ -60,7 +60,7 @@ class AGNOBlock(nn.Module):
         # the following MLP computes learns the kernel K(x,y,f(x)) in the nonlinear case, or just K(x,y) in the linear case
         kernel_in_ch = self.f_channels + 2*self.pos_embedding_channels if self.pos_embed else self.f_channels + 2*self.coord_dim
         # K(x_emb, y_emb, MLP(f(x))) or K(x, y, MLP(f(x))) depending on pos_embed
-        if channel_mlp is not None: # personalized channel if transform_type is nonlinear
+        if channel_mlp is not None:
             assert channel_mlp.in_channels == kernel_in_ch, f"Error: expected ChannelMLP to take\
                   input with {kernel_in_ch} channels (feature channels={kernel_in_ch}),\
                       got {channel_mlp.in_channels}."
@@ -106,9 +106,5 @@ class AGNOBlock(nn.Module):
         f_y = self.integral_transform(x=x, y=y, x_embed=x_emb if self.pos_embed else None, y_embed=y_emb if self.pos_embed else None,
                                       f_x=f_x, phi_x=phi_x, Q=Q, K_att=K_att, neighbors_index=neighbors_index, row_splits=row_splits)
 
-        """
-        complete this with the computation of sum_x K(x,y,f(x)) * lift_ffn(f(x)) for each y. the sum is taken over neighbors and alpha should be 
-        the attention-based weights form Q and K similarly to GAOT. use integral transform (whose forward pass should be coded accordingly)
-        """
 
         return f_y

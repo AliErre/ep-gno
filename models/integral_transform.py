@@ -86,6 +86,7 @@ def forward(
 
     # Φ(f(x))
     if phi_x is not None: # "nonlinear"
+        assert self.transform_type == 'nonlinear' and phi_x is not None, "Error: transform_type 'nonlinear' requires phi_x to be provided."
         phi_edge = (phi_x[:, neighbors, :] if batched else phi_x[neighbors])
         K_xy = K_xy * phi_edge
 
