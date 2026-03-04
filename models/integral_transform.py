@@ -9,6 +9,25 @@ from neuralop.layers.segment_csr import segment_csr
 this code assumes same mesh (same x), different "PDE" solutions. batching logic gives it away
 extend this to different meshes/geometries, unless in pre-processing all geometries are mapped to reference manifold
 """
+
+class IntegralTransform(nn.Module):
+
+    def __init__(
+        self,
+        channel_mlp,
+        transform_type="linear",
+        weights: str = "attention",   # NEW
+        use_torch_scatter=True,
+    ):
+        super().__init__()
+        self.channel_mlp = channel_mlp
+        self.transform_type = transform_type
+        self.weights = weights
+        self.use_torch_scatter = use_torch_scatter
+
+        assert weights in ["attention", "mean"], \
+            "weights must be 'attention' or 'mean'"
+        
 def forward(
     self,
     x,                    # [n, d_x]
