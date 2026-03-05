@@ -129,5 +129,5 @@ class true_GPPrior(torch.distributions.distribution.Distribution):
             else:
                 logp += self.base_dist.log_prob(torch.flatten(x[:,i], start_dim=1))
         
-        return logp                
+        return logp         
   
