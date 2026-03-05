@@ -76,7 +76,8 @@ class DecoderPerceiver(nn.Module):
         self.pred = nn.Sequential(nn.LayerNorm(perc_dim, eps=1e-6), LinearProjection(perc_dim, output_dim, init_weights=init_weights))
     
 
-    def forward(self, x, f, output_pos, output_val, time_condition=None, condition=None):
+    def forward(self, x, output_val, output_pos, time_condition=None, condition=None):
+        # output_val = f_t(x), x = output_pos
         if time_condition is not None:
             assert time_condition.ndim == 2, 'expected shape (batch_size, cond_dim)'
         if condition is not None:
