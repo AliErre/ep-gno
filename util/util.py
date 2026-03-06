@@ -36,6 +36,7 @@ def plot_loss_curve(tr_loss, save_path, te_loss=None, te_epochs=None, logscale=T
 
 def point_cloud_coords(dim, n_pts, mesh):
     # choose n_pts on meshgrid
+    # shape of returned obj: [n_pts, dim]
     return None
 
 def make_grid(dims, x_min=0, x_max=1):
@@ -137,7 +138,7 @@ def SimulationCollator(batch):
                                                   dim=x_dim)
     
     # --- Process ECG Conditioning (Simple Stack) ---
-    # This turns a list of [C, T] tensors into one [bs, channels, timesteps] tensor
+    # This turns a list of [channels, timesteps] tensors into one [bs, channels, timesteps] tensor
     collated_batch["conditioning"] = torch.stack(input_conditioning)
     # inquired position 
     return collated_batch
