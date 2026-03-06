@@ -34,6 +34,10 @@ def plot_loss_curve(tr_loss, save_path, te_loss=None, te_epochs=None, logscale=T
     plt.savefig(save_path)
     plt.close(fig)
 
+def point_cloud_coords(dim, n_pts, mesh):
+    # choose n_pts on meshgrid
+    return None
+
 def make_grid(dims, x_min=0, x_max=1):
     """ Creates a 1D or 2D grid based on the list of dimensions in dims.
 
@@ -76,18 +80,19 @@ def make_3d_grid(dims, x_min=0, x_max=1):
 
 
 class SimDataset(Dataset):
-    def __init__(self, data, pos, query_pos):
+    def __init__(self, data, pos, query_pos, conditioning=None):
         super().__init__()
         self.data = data.permute(0, 2, 1) # [batch, n_seq, n_chan]
         self.pos = pos.permute(0, 2, 1)
         self.query_pos = query_pos.unsqueeze(0).repeat(len(data), 1, 1).permute(0, 2, 1)
+        self.conditioning = conditioning
         
     def __len__(self):
         return len(self.pos)
     
     def __getitem__(self, idx):
-        return dict(input_feat=self.data[idx], input_pos=self.pos[idx], query_pos=self.query_pos[idx])
-    
+        return dict(input_feat=self.data[idx], input_pos=self.pos[idx], query_pos=self.query_pos[idx], conditioning=self.conditioning[idx] if self.conditioning is not None else None)
+
 def SimulationCollator(batch):
     
     collated_batch = {}
@@ -99,16 +104,20 @@ def SimulationCollator(batch):
     input_query_pos = []
     input_feat = []
     input_lens = []
+    input_conditioning = []
 
     batch_size = len(batch)
     for i in range(len(batch)):
         pos = batch[i]["input_pos"]
         query_pos = batch[i]['query_pos']
         feat = batch[i]["input_feat"]
+        cond = batch[i]["conditioning"] if "conditioning" in batch[i] else None
         assert len(pos) == len(pos)
         input_pos.append(pos)
         input_feat.append(feat)
         input_query_pos.append(query_pos)
+        if cond is not None:
+            input_conditioning.append(cond)
 
     x_dim = pos.shape[-1]
     n_chan = feat.shape[-1]
@@ -126,5 +135,9 @@ def SimulationCollator(batch):
     collated_batch['query_pos']= einops.rearrange(concat_query_pos, "(batch_size seq_len) dim -> batch_size dim seq_len",
                                                   batch_size=batch_size,
                                                   dim=x_dim)
-    # inquired positin 
+    
+    # --- Process ECG Conditioning (Simple Stack) ---
+    # This turns a list of [C, T] tensors into one [bs, channels, timesteps] tensor
+    collated_batch["conditioning"] = torch.stack(input_conditioning)
+    # inquired position 
     return collated_batch

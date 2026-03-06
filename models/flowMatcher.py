@@ -53,7 +53,7 @@ class OTFuncFlowMatcherModel:
     
 def train(self, train_loader, optimizer, epochs, scheduler=None, test_loader=None, eval_int=1,
               save_int=0, generate=False, save_path=None, saved_model=False):
-        
+        # might remove generate argument
         tr_losses = []
         te_losses = []
         eval_eps = []

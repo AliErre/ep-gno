@@ -13,6 +13,10 @@ def matern_kernel_cov(grids, length_scale, nu):
 class true_GPPrior(torch.distributions.distribution.Distribution):
     """
     Wrapper around some torch utilities that makes prior sampling easy.
+    Cons: If your (x,y,z) coordinates are simply raw points in 3D space, 
+    do not use this script. It will treat your points as if they exist on a 2-sphere 
+    surface, and the math will not align with raw 3D Cartesian points.
+    ^ even more so might need geometry embeddings to infrom network + statistical shapes to condition on?
     """
     def __init__(self, kernel=None, mean=None, lengthscale=None, var=None, nu=0.5, device='cpu', n_pos=None):
         """
