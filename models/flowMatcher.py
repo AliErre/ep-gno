@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torchdiffeq import odeint
 #from util.gaussian_process import GPPrior
+from models import GeoLearn
 from util.true_gaussian_process_seq import true_GPPrior
 from torchcfm.optimal_transport import OTPlanSampler
 from util.util import reshape_for_batchwise, plot_loss_curve
@@ -9,7 +10,7 @@ import time
 from torch.utils.tensorboard import SummaryWriter
 # remember that torchcfm actually never samples t=1. Might want to change this later, also adding stratified sampling of times
 class OTFuncFlowMatcherModel:
-    def __init__(self, model, kernel_length=0.01, kernel_variance=1.0, nu=0.5, sigma_min=1e-4, device='cpu',
+    def __init__(self, model:GeoLearn, kernel_length=0.01, kernel_variance=1.0, nu=0.5, sigma_min=1e-4, device='cpu',
                  dtype=torch.double, x_dim=None, n_pos=None):
         self.model = model
         self.device = device

@@ -177,6 +177,9 @@ def main():
             gen.append(X_int)
         gen = torch.vstack(gen).squeeze()
 
+    torch.save(gen, spath / 'generated_activation_maps.pt')
+    print(f"Generated {gen.shape[0]} samples in {time.time() - start:.2f}s and saved to {spath}")
+
 
 
 

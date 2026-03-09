@@ -45,6 +45,7 @@ class GeoLearn(nn.Module):
                                      batch_size = batch_size,
                                      dim = x_dim)       
         # encode
+        # input_val = x_t
         enc_out = self.encoder(fun = input_val, source = input_pos, query = query_pos, time_condition = time_emb, condition = condition)
         # decode
         dec_out = self.decoder(x = enc_out, output_val = output_val, output_pos = output_pos, time_condition = time_condition, condition = condition)

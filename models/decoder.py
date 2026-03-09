@@ -77,7 +77,7 @@ class DecoderPerceiver(nn.Module):
     
 
     def forward(self, x, output_val, output_pos, time_condition=None, condition=None):
-        # output_val = f_t(x), x = output_pos
+        # output a taregt field in physical space at coordinates output_pos
         if time_condition is not None:
             assert time_condition.ndim == 2, 'expected shape (batch_size, cond_dim)'
         if condition is not None:
